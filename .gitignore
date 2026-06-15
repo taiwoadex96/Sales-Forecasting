@@ -1,3 +1,22 @@
+# Virtual Environment
+venv/
+
+# Python Artifacts & Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data and Models (Never track raw datasets or heavy binaries)
+data/
+artifacts/
+logs/
+
+# IDE Configuration Settings
+.vscode/
+.idea/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
