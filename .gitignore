@@ -9,8 +9,7 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 
-# Data and Models (Never track raw datasets or heavy binaries)
-data/
+# Data and Models (Never track operational binaries or logs)
 artifacts/
 logs/
 
