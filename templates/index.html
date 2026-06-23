@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Forecast Output</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; text-align: center; padding-top: 100px; }
+        .card { max-width: 500px; background: white; padding: 40px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #2ecc71; margin-bottom: 10px; }
+        h3 { color: #333; margin-top: 0; }
+        .price { font-size: 32px; font-weight: bold; color: #0071dc; margin: 20px 0; }
+        .back-btn { text-decoration: none; color: white; background-color: #333; padding: 10px 20px; border-radius: 4px; font-weight: bold; }
+        .back-btn:hover { background-color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h3>Predicted Weekly Sales Revenue</h3>
+        <div class="price">${{results}}</div>
+        <p style="color: #777; margin-bottom: 30px;">Inference parsed smoothly via LightGBM Champion Engine</p>
+        <a href="/" class="back-btn">Run Another Query</a>
+    </div>
+</body>
+</html>
