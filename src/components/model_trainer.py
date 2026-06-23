@@ -2,13 +2,13 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-import pickle
 from dataclasses import dataclass
 from lightgbm import LGBMRegressor
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, r2_score
 
 from src.exception import CustomException
 from src.logger import logger
+from src.utils import save_object
 
 @dataclass
 class ModelTrainerConfig:
@@ -29,7 +29,6 @@ class ModelTrainer:
             test_df = pd.read_csv(test_path)
 
             # 2. Isolate independent features from target label (Weekly_Sales)
-            # 'Store' is kept as a feature since it serves as a crucial categorical tracking ID
             X_train = train_df.drop(columns=['Weekly_Sales'])
             y_train = train_df['Weekly_Sales']
             X_test = test_df.drop(columns=['Weekly_Sales'])
@@ -62,23 +61,22 @@ class ModelTrainer:
             mape = mean_absolute_percentage_error(y_test, predictions) * 100
             r2 = r2_score(y_test, predictions)
 
-            # Log insights into our structured text files
             logger.info("--- 📊 Production Model Pipeline Performance Summary ---")
             logger.info(f"Target R² (Variance Explained): {r2 * 100:.2f}%")
             logger.info(f"Mean Absolute Error (MAE): ${mae:,.2f}")
             logger.info(f"Root Mean Squared Error (RMSE): ${rmse:,.2f}")
             logger.info(f"Mean Absolute Percentage Error (MAPE): {mape:.2f}%")
 
-            # Quality Check: Fail if performance falls below our strict 85% R² validation threshold
+            # Quality Check Boundary
             if r2 < 0.85:
                 raise CustomException("Trained production model R² score drops below established 85% threshold bounds.", sys)
 
-            # 5. Serialize and export the champion model binary
-            logger.info(f"Serializing champion model artifact to: {self.model_trainer_config.trained_model_path}")
-            os.makedirs(os.path.dirname(self.model_trainer_config.trained_model_path), exist_ok=True)
-            
-            with open(self.model_trainer_config.trained_model_path, "wb") as file_obj:
-                pickle.dump(lgb_model, file_obj)
+            # 5. Serialize and export the champion model binary using utils
+            logger.info("Exporting champion model binary via utilities module...")
+            save_object(
+                file_path=self.model_trainer_config.trained_model_path,
+                obj=lgb_model
+            )
 
             logger.info("Model Trainer component workflow completed successfully.")
             return r2
