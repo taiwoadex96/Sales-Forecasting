@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Walmart Weekly Sales Forecasting</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 40px; }
+        .container { max-width: 700px; background: white; padding: 30px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { color: #0071dc; border-bottom: 2px solid #f4f6f9; padding-bottom: 10px; margin-top: 0; }
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 5px; color: #333; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .btn { background-color: #ffc220; color: #000; font-weight: bold; border: none; padding: 12px; font-size: 16px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .btn:hover { background-color: #e5ad1c; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Walmart Weekly Sales Prediction Engine</h2>
+        <form action="/predict" method="POST">
+            <div class="grid">
+                <div class="form-group">
+                    <label>Store ID</label>
+                    <input type="number" name="store" min="1" max="45" required value="1">
+                </div>
+                <div class="form-group">
+                    <label>Target Date</label>
+                    <input type="date" name="date_str" required>
+                </div>
+            </div>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Is Holiday Week?</label>
+                    <select name="holiday_flag">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Temperature (°F)</label>
+                    <input type="number" step="0.01" name="temperature" required value="55.0">
+                </div>
+            </div>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Fuel Price ($/Gal)</label>
+                    <input type="number" step="0.001" name="fuel_price" required value="3.50">
+                </div>
+                <div class="form-group">
+                    <label>Consumer Price Index (CPI)</label>
+                    <input type="number" step="0.000001" name="cpi" required value="211.0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Unemployment Rate (%)</label>
+                <input type="number" step="0.001" name="unemployment" required value="7.5">
+            </div>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #555;">Autoregressive Historical Sales Anchors</h4>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Sales Lag 1 (Last Week)</label>
+                    <input type="number" step="0.01" name="sales_lag_1" required value="1500000">
+                </div>
+                <div class="form-group">
+                    <label>Sales Lag 2 (2 Weeks Ago)</label>
+                    <input type="number" step="0.01" name="sales_lag_2" required value="1450000">
+                </div>
+            </div>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Sales Lag 4 (4 Weeks Ago)</label>
+                    <input type="number" step="0.01" name="sales_lag_4" required value="1600000">
+                </div>
+                <div class="form-group">
+                    <label>Rolling Mean 4</label>
+                    <input type="number" step="0.01" name="rolling_mean_4" required value="1512500">
+                </div>
+            </div>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Rolling Standard Deviation 4</label>
+                    <input type="number" step="0.01" name="rolling_std_4" required value="65000">
+                </div>
+                <div class="form-group">
+                    <label>Exponential Moving Average (EMA 4)</label>
+                    <input type="number" step="0.01" name="ema_4" required value="1505000">
+                </div>
+            </div>
+            <button type="submit" class="btn">Generate Sales Forecast</button>
+        </form>
+    </div>
+</body>
+</html>
