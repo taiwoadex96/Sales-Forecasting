@@ -8,7 +8,7 @@ from src.logger import logger
 if __name__ == "__main__":
     try:
         logger.info("==================================================")
-        logger.info("🚀 Initiating End-to-End Core Production Pipeline Run")
+        logger.info("Initiating End-to-End Core Production Pipeline Run")
         logger.info("==================================================")
         
         # 1. Trigger File Ingestion Pipeline Stage
@@ -24,12 +24,12 @@ if __name__ == "__main__":
         trainer = ModelTrainer()
         final_variance_score = trainer.initiate_model_trainer(train_path=train_feat_path, test_path=test_feat_path)
         
-        print(f"\n🏆 Pipeline Run Complete! Model Variance Explanation (R²): {final_variance_score * 100:.2f}%")
+        print(f"\nPipeline Run Complete! Model Variance Explanation (R²): {final_variance_score * 100:.2f}%")
         logger.info("==================================================")
         logger.info("🎉 End-to-End Core Pipeline Completed Successfully!")
         logger.info("==================================================")
 
     except Exception as e:
-        logger.error(f"❌ Pipeline Execution Aborted: {str(e)}")
-        print(f"\n❌ Pipeline Failed. Check the latest log file in logs/ for structural traceback details.")
+        logger.error(f"Pipeline Execution Aborted: {str(e)}")
+        print(f"\nPipeline Failed. Check the latest log file in logs/ for structural traceback details.")
         sys.exit(1)
