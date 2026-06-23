@@ -2,24 +2,22 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-import pickle
 
 from src.exception import CustomException
 from src.logger import logger
+from src.utils import load_object
 
 class PredictPipeline:
     def __init__(self):
         self.model_path = os.path.join("artifacts", "model.pkl")
-        self.meta_mapping_path = os.path.join("artifacts", "store_avg_sales_meta.pkl")
 
     def predict(self, features_df):
         """Loads serialized assets and generates live sales forecasts"""
         try:
             logger.info("Loading inference assets for live prediction request...")
             
-            # Load the Champion LightGBM model binary
-            with open(self.model_path, "rb") as file_obj:
-                model = pickle.load(file_obj)
+            # Load the Champion LightGBM model binary via utils
+            model = load_object(file_path=self.model_path)
                 
             # Generate the inference calculation
             prediction = model.predict(features_df)
@@ -70,8 +68,6 @@ class CustomData:
             year = date_obj.year
             month = date_obj.month
             day_of_week = date_obj.dayofweek
-            
-            # Use ISO calendar calculation for week number
             week_of_year = int(date_obj.isocalendar()[1])
 
             # 2. Extract engineered holiday features
@@ -89,10 +85,9 @@ class CustomData:
             # 4. Compute macroeconomic interaction feature
             fuel_unemployment_interaction = self.fuel_price * self.unemployment
 
-            # 5. Load the un-leaked historical store baseline sales meta-mapping
+            # 5. Load the un-leaked historical store baseline sales map via utils
             meta_path = os.path.join("artifacts", "store_avg_sales_meta.pkl")
-            with open(meta_path, "rb") as file_obj:
-                store_avg_sales_map = pickle.load(file_obj)
+            store_avg_sales_map = load_object(file_path=meta_path)
             
             # Map the baseline sales or fallback to the network average if it's a new store ID
             store_avg_sales = store_avg_sales_map.get(self.store, np.mean(list(store_avg_sales_map.values())))
