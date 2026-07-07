@@ -1,6 +1,6 @@
 import os
 import sys
-import numpy as np
+import math
 import pandas as pd
 
 from src.exception import CustomException
@@ -15,14 +15,9 @@ class PredictPipeline:
         """Loads serialized assets and generates live sales forecasts"""
         try:
             logger.info("Loading inference assets for live prediction request...")
-            
-            # Load the Champion LightGBM model binary via utils
             model = load_object(file_path=self.model_path)
-                
-            # Generate the inference calculation
             prediction = model.predict(features_df)
             return prediction
-
         except Exception as e:
             logger.error("Exception encountered during operational inference cycle.")
             raise CustomException(e, sys)
@@ -33,7 +28,7 @@ class CustomData:
     def __init__(
         self,
         store: int,
-        date_str: str,  # Format: YYYY-MM-DD from HTML5 date picker
+        date_str: str,
         holiday_flag: int,
         temperature: float,
         fuel_price: float,
@@ -57,17 +52,17 @@ class CustomData:
         self.sales_lag_2 = sales_lag_2
         self.sales_lag_4 = sales_lag_4
         self.rolling_mean_4 = rolling_mean_4
-        self.rolling_std_4 = rolling_std_4
+        self.input_rolling_std_val = rolling_std_4
         self.ema_4 = ema_4
 
     def get_data_as_data_frame(self):
-        """Applies feature transformations to match the production training feature space"""
+        """Applies feature transformations cleanly and maps data types explicitly"""
         try:
             # 1. Parse operational date attributes
             date_obj = pd.to_datetime(self.date_str)
-            year = date_obj.year
-            month = date_obj.month
-            day_of_week = date_obj.dayofweek
+            year = int(date_obj.year)
+            month = int(date_obj.month)
+            day_of_week = int(date_obj.dayofweek)
             week_of_year = int(date_obj.isocalendar()[1])
 
             # 2. Extract engineered holiday features
@@ -76,51 +71,67 @@ class CustomData:
             thanksgiving_week = 1 if (month == 11 and self.holiday_flag == 1) else 0
             christmas_week = 1 if (month == 12 and self.holiday_flag == 1) else 0
 
-            # 3. Compute cyclical trigonometric features
-            month_sin = np.sin(2 * np.pi * month / 12)
-            month_cos = np.cos(2 * np.pi * month / 12)
-            week_sin = np.sin(2 * np.pi * week_of_year / 52)
-            week_cos = np.cos(2 * np.pi * week_of_year / 52)
+            # 3. Compute cyclical wave features natively using math rules
+            month_sin = float(math.sin(2 * math.pi * month / 12))
+            month_cos = float(math.cos(2 * math.pi * month / 12))
+            week_sin = float(math.sin(2 * math.pi * week_of_year / 52))
+            week_cos = float(math.cos(2 * math.pi * week_of_year / 52))
 
             # 4. Compute macroeconomic interaction feature
-            fuel_unemployment_interaction = self.fuel_price * self.unemployment
+            fuel_unemployment_interaction = float(self.fuel_price * self.unemployment)
 
-            # 5. Load the un-leaked historical store baseline sales map via utils
+            # 5. Load target baseline historical metadata series safely
             meta_path = os.path.join("artifacts", "store_avg_sales_meta.pkl")
-            store_avg_sales_map = load_object(file_path=meta_path)
+            store_avg_sales_series = load_object(file_path=meta_path)
             
-            # Map the baseline sales or fallback to the network average if it's a new store ID
-            store_avg_sales = store_avg_sales_map.get(self.store, np.mean(list(store_avg_sales_map.values())))
+            # Extract historical baseline or calculate global mean fallback safely from the Series
+            global_mean_fallback = float(store_avg_sales_series.mean())
+            
+            if self.store in store_avg_sales_series.index:
+                store_avg_sales = float(store_avg_sales_series.loc[self.store])
+            else:
+                store_avg_sales = global_mean_fallback
 
-            # 6. Construct the feature dictionary aligned *exactly* with the model's training columns
+            # 6. Construct dictionary reflecting exact column configurations from model training
             input_data = {
-                "Store": [self.store],
-                "Holiday_Flag": [self.holiday_flag],
-                "Temperature": [self.temperature],
-                "Fuel_Price": [self.fuel_price],
-                "CPI": [self.cpi],
-                "Unemployment": [self.unemployment],
-                "Year": [year],
-                "Day_of_Week": [day_of_week],
-                "Super_Bowl_Week": [super_bowl_week],
-                "Labor_Day_Week": [labor_day_week],
-                "Thanksgiving_Week": [thanksgiving_week],
-                "Christmas_Week": [christmas_week],
+                "Store": [int(self.store)],
+                "Holiday_Flag": [int(self.holiday_flag)],
+                "Temperature": [float(self.temperature)],
+                "Fuel_Price": [float(self.fuel_price)],
+                "CPI": [float(self.cpi)],
+                "Unemployment": [float(self.unemployment)],
+                "Year": [int(year)],
+                "Day_of_Week": [int(day_of_week)],
+                "Super_Bowl_Week": [int(super_bowl_week)],
+                "Labor_Day_Week": [int(labor_day_week)],
+                "Thanksgiving_Week": [int(thanksgiving_week)],
+                "Christmas_Week": [int(christmas_week)],
                 "Month_Sin": [month_sin],
                 "Month_Cos": [month_cos],
                 "Week_Sin": [week_sin],
                 "Week_Cos": [week_cos],
-                "Sales_Lag_1": [self.sales_lag_1],
-                "Sales_Lag_2": [self.sales_lag_2],
-                "Sales_Lag_4": [self.sales_lag_4],
-                "Rolling_Mean_4": [self.rolling_mean_4],
-                "Rolling_STD_4": [self.rolling_std_4],
-                "EMA_4": [self.ema_4],
+                "Sales_Lag_1": [float(self.sales_lag_1)],
+                "Sales_Lag_2": [float(self.sales_lag_2)],
+                "Sales_Lag_4": [float(self.sales_lag_4)],
+                "Rolling_Mean_4": [float(self.rolling_mean_4)],
+                "Rolling_STD_4": [float(self.input_rolling_std_val)],
+                "EMA_4": [float(self.ema_4)],
                 "Fuel_Unemployment_Interaction": [fuel_unemployment_interaction],
                 "Store_Avg_Sales": [store_avg_sales]
             }
 
             features_df = pd.DataFrame(input_data)
+            
+            # Explicitly lock down column data types for LightGBM layout matching
+            features_df['Store'] = features_df['Store'].astype('int64')
+            features_df['Holiday_Flag'] = features_df['Holiday_Flag'].astype('int64')
+            features_df['Year'] = features_df['Year'].astype('int64')
+            features_df['Day_of_Week'] = features_df['Day_of_Week'].astype('int64')
+            features_df['Super_Bowl_Week'] = features_df['Super_Bowl_Week'].astype('int64')
+            features_df['Labor_Day_Week'] = features_df['Labor_Day_Week'].astype('int64')
+            features_df['Thanksgiving_Week'] = features_df['Thanksgiving_Week'].astype('int64')
+            features_df['Christmas_Week'] = features_df['Christmas_Week'].astype('int64')
+
             logger.info("Successfully converted incoming request payload into model-ready DataFrame row.")
             return features_df
 
