@@ -66,7 +66,7 @@ Sales-Forecasting/
 
 ---
 
-## 🔬 Engineered Features Reference
+## Engineered Features Reference
 
 The model pipeline transforms a set of standard administrative metrics into 24 distinct machine learning feature vectors:
 
